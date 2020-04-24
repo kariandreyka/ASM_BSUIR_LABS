@@ -55,7 +55,6 @@ input_of_array:
     push    word ptr[si]
     call    parse
     pop     word ptr[si]
-    mov     bx, array + si*2
     add     si, 2
     
     loop    input_of_array  
@@ -248,14 +247,25 @@ exit:
         
         mov     bx, ax
         pop     ax
-        add     bx, ax  
+        add     bx, ax
         
-        push    bx 
-        and     bh, 80h
-        cmp     bh, 0
-        jne     exception  
-        pop     bx
+        jo      border_check
+        jmp     next
         
+    border_check:
+        cmp     bx, 8000h
+        je      sign_chek
+        jne     exception
+            
+    sign_chek:
+        pop     dx
+        cmp     dl,0  
+        push    dx
+        je      exception
+        jmp     next 
+           
+        
+    next:
         loop    For
                      
         pop     dx
