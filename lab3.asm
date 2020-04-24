@@ -114,7 +114,7 @@ exit:
     sort_loop:       
         mov     ax, word ptr[si]
         cmp     ax, word ptr[si+2]
-        jnl     nxt
+        jle     nxt
         xchg    ax, word ptr[si+2]
         mov     word ptr[si], ax
   
@@ -176,7 +176,7 @@ exit:
         cmp     ax, 0
         jnz     loop1
         
-        add     buffer+1, cl        
+        mov     buffer+1, cl        
            
         
     loop2:
@@ -185,7 +185,7 @@ exit:
         stosb
         loop loop2 
         
-        mov     byte ptr [di+1], '$' 
+        mov     byte ptr [di], '$' 
         
         pop     dx
         pop     cx
@@ -234,17 +234,28 @@ exit:
         lodsb   
         sub     al, '0'  
         cmp     al, 10
-        jge     exception  
+        jge     exception
+        cmp     al, 0
+        jl      exception  
         
         push    ax
         mov     ax, bx
         mov     bx, 10
         mul     bx 
+        
         cmp     dx, 0
         jne     exception
+        
         mov     bx, ax
         pop     ax
-        add     bx, ax
+        add     bx, ax  
+        
+        push    bx 
+        and     bh, 80h
+        cmp     bh, 0
+        jne     exception  
+        pop     bx
+        
         loop    For
                      
         pop     dx
