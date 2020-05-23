@@ -2,9 +2,9 @@
 
 data segment
     buffer db 30, 0, 30 dup(0)
-    array dw 100 dup(0) 
+    array dw 30 dup(0) 
     array_len   dw ?
-    start_msg   db "Enter count of array : ", 0Dh, 0Ah, '$'  
+    start_msg   db "Enter count of array (from 2 to 30): ", 0Dh, 0Ah, '$'  
     CrLf        db 0Dh, 0Ah, '$'
     input_msg   db "Enter array :", 0Dh, 0Ah, '$'   
     output_msg  db "Mediana :", 0Dh, 0Ah, '$'    
@@ -35,7 +35,11 @@ start:
 
     push    array_len  
     call    parse
-    pop     array_len
+    pop     array_len 
+    cmp     array_len, 2
+    jl      exception
+    cmp     array_len, 30
+    jg      exception
     
     mov     cx, array_len
     lea     si, array
