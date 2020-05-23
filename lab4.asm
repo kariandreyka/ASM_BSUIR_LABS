@@ -184,7 +184,7 @@ show_gameover proc
 			call buffer_write_string
 			call buffer_render
 			jmp _wait_for_key_gameover
-	_exit_show_gameover:
+	_exit_show_gameover: 
 		popa
 		ret
 show_gameover endp
@@ -286,10 +286,20 @@ check_key_pressed proc
 	jz      end_check
 	mov     ah, 0h
 	int     16h 
-	mov     key_code, ax 
+    cmp     ah, 48h ; up
+	je      add_key
+	cmp     ah, 50h ; down
+	je      add_key
+	cmp     ah, 4bh; left
+	je      add_key
+	cmp     ah, 4dh; right
+	je      add_key 
 	cmp     al, 27
 	je      exit_func  
-	jmp     end_check
+	jmp     end_check 
+	add_key:
+	    mov     key_code, ax
+	    jmp     end_check	
 	exit_func:
 	    jmp     far ptr _exit 
 	end_check:
@@ -367,24 +377,55 @@ update_snake proc
 	    jmp     _end_snake
 	
 	up:          
-	    
+	    cmp     word ptr[snake_body_array], 240
+	    jl      toBottom
 	    sub     word ptr[snake_body_array], 80 
-	    call    draw_snake  
+	    call    draw_snake 
+	    jmp     _end_snake
+	    toBottom:
+	        add     word ptr[snake_body_array], 1680 
+	        call    draw_snake    
 	    jmp     _end_snake
 	    
-	down:                 
+	down:               
+	    cmp     word ptr[snake_body_array], 1840
+	    jg      toTop  
 	    add     word ptr[snake_body_array], 80  
 	    call    draw_snake 
 	    jmp     _end_snake
+	    toTop:
+	        sub     word ptr[snake_body_array], 1680
+	        call    draw_snake     
+	    jmp     _end_snake
 	    
-	left:               
+	left:  
+	    mov     ax, [snake_body_array]
+	    mov     bx, 80                  
+	    xor     dx, dx
+	    div     bx  
+	    cmp     dx, 31
+	    je      toRight              
 	    sub     word ptr[snake_body_array], 1  
 	    call    draw_snake
 	    jmp     _end_snake
+	    toRight:
+	        add     word ptr[snake_body_array], 14
+	        call    draw_snake     
+	    jmp     _end_snake
 	    
-	right:        
+	right:  
+	    mov     ax, [snake_body_array]
+	    mov     bx, 80                  
+	    xor     dx, dx
+	    div     bx  
+	    cmp     dx, 45
+	    je      toLeft      
 	    add     word ptr[snake_body_array], 1    
 	    call    draw_snake
+	    jmp     _end_snake 
+	    toLeft:
+	        sub     word ptr[snake_body_array], 14
+	        call    draw_snake     
 	    jmp     _end_snake
 	     
 	_end_snake:
@@ -459,19 +500,7 @@ check_snake_collision proc
 	pusha
 	xor ax, ax
 	xor bx, bx  
-	xor dx, dx
-	mov ax, word ptr[snake_body_array] 
-	mov bx, 80
-	div bx
-	cmp dx, 30
-	jle collision_detected
-	cmp dx, 46
-	jge collision_detected
-	mov ax, word ptr[snake_body_array] 
-	cmp ax, 190
-	jl  collision_detected
-	cmp ax, 1920 
-	jg  collision_detected  
+	xor dx, dx 
 	
 	xor cx, cx
 	mov cl, byte ptr[object_counter] 
@@ -509,7 +538,7 @@ increase_speed proc
 		cmp bl, TRUE
 		je _exit_increase_speed
 		mov al, byte ptr[time_interval]
-		cmp al, 5
+		cmp al, 20
 		jle _sub_one
 		jmp _sub_five
 		_sub_one:
@@ -594,14 +623,14 @@ _start:
 	main_loop:
 		call    print_score 		    
 		call    update_snake
-		call    buffer_render
 		call check_snake_collision
 		xor ax, ax
 		mov al, byte ptr[end_game_flag]
 		cmp ax, TRUE
 		je _exit
 		call increase_speed
-		 jmp main_loop
+		call    buffer_render
+	    jmp main_loop
 _exit:
 call buffer_clear
 call buffer_render
